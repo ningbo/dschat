@@ -341,10 +341,8 @@
                 }
                 try {
                     const response = await fetch(API_CONFIG.bytedance.endpoint, options)
-                    // 由于使用了no-cors模式，response将是不透明的，无法直接读取
-                    // 这里假设API会直接返回文本内容
-                    const text = await response.text()
-                    return text || "抱歉，暂时无法获取回答"
+                    const data = await response.json()
+                    return data.choices[0].message.content
                 } catch (error) {
                     console.error('API请求失败:', error)
                     alert(error)
