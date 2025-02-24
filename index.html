@@ -143,14 +143,19 @@
                 style="position: relative; left: 0; top: 0; margin-bottom: 15px;">
                 <div class="model-group-title">硅基流动</div>
                 <div class="model-option active" data-value="deepseek-ai/DeepSeek-R1">DeepSeek-R1</div>
-                <div class="model-option" data-value="deepseek-ai/DeepSeek-V3">DeepSeek-V3</div>
-                <div class="model-option" data-value="deepseek-ai/DeepSeek-V2.5">DeepSeek-R2.5</div>
             </div>
 
             <!-- 字节跳动模型选择区域 -->
             <div class="model-radio-container" data-group="bytedance"
                 style="position: relative; left: 0; top: 0; margin-bottom: 15px;">
                 <div class="model-group-title">字节跳动</div>
+                <div class="model-option" data-value="deepseek-r1-250120">Deepseek-R1</div>
+            </div>
+
+            <!-- 字节跳动模型选择区域 -->
+            <div class="model-radio-container" data-group="tengxun"
+                style=" position: relative; left: 0; top: 0; margin-bottom: 15px;">
+                <div class="model-group-title">腾讯</div>
                 <div class="model-option" data-value="deepseek-r1-250120">Deepseek-R1</div>
             </div>
 
@@ -327,30 +332,52 @@
             }
             if (currentGroup == 'bytedance') {
                 
+                // 定义请求的 URL
+                const url = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+
+                // 定义请求的选项
                 const options = {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${API_CONFIG.bytedance.key}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer d033506b-aeb1-49b8-8bfd-ba38c2489720'
                     },
                     body: JSON.stringify({
-                        model: selectedModel, // 使用当前选中的模型
-                        messages: [{ "role": "user", "content": userInput }]
-                    }),
-                    mode: 'cors' // 解决CORS问题
-                }
-                try {
-                    const response = await fetch(API_CONFIG.bytedance.endpoint, options)
-                    const data = await response.json()
-                    return data.choices[0].message.content
-                } catch (error) {
-                    console.error('API请求失败:', error)
-                    alert(error)
-                    return "抱歉，暂时无法获取回答"
-                }
+                        "model": "deepseek-r1-250120",
+                        "messages": [
+                            { "role": "system", "content": "你是人工智能助手." },
+                            { "role": "user", "content": userInput }
+                        ]
+                    })
+                };
+
+                // 发送请求
+                fetch(url, options)
+                    .then(response => {
+                        // 检查响应状态
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        // 解析响应为 JSON
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 移除加载中的消息
+                        const loadingMessages = document.querySelectorAll('.loading-message');
+                        if (loadingMessages.length > 0) {
+                            loadingMessages[loadingMessages.length - 1].remove();
+                        }
+                        // 保留返回数据的原始格式
+                        const responseContent = data.choices[0].message.content;
+                        // 使用pre标签包裹内容以保留格式，并添加样式控制
+                        addMessage(responseContent, false);
+                    })
+                    .catch(error => {
+                        // 处理错误
+                        console.error('请求出错:', error);
+                    });
 
             }
-            
 
         }
 
@@ -367,9 +394,14 @@
                 const loadingMessage = addLoadingMessage()
 
                 try {
-                    const aiResponse = await getAIResponse(userMessage)
-                    chatHistory.removeChild(loadingMessage)
-                    addMessage(aiResponse, false)
+                    if (currentGroup == 'guiji') {
+                        const aiResponse = await getAIResponse(userMessage)
+                        chatHistory.removeChild(loadingMessage)
+                        addMessage(aiResponse, false)
+                    }else {
+                        getAIResponse(userMessage)
+                    }
+                    
                 } catch (error) {
                     chatHistory.removeChild(loadingMessage)
                     addMessage("请求出错，请稍后再试", false)
